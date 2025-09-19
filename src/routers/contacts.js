@@ -18,20 +18,20 @@ const contactSchema = Joi.object({
 router.get("/", contactsController.getAllContacts);
 
 // GET one contact
-router.get("/:contactId", isValidId, contactsController.getContactById);
+router.get("/:id", isValidId, contactsController.getContactById);
 
 // POST new contact
 router.post("/", validateBody(contactSchema), contactsController.addContact);
 
 // PATCH update contact
 router.patch(
-    "/:contactId",
+    "/:id",
     isValidId,
     validateBody(contactSchema),
     contactsController.updateContact
 );
 
 // DELETE contact
-router.delete("/:contactId", isValidId, contactsController.deleteContact);
+router.delete("/:id", isValidId, contactsController.deleteContact);
 
 export default router;
