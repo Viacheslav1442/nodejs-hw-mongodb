@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as contactsCtrl from "../controllers/contacts.js";
+import contactsController from "../controllers/contacts.js";
 import { validateBody } from "../middlewares/validateBody.js";
 import { isValidId } from "../middlewares/isValidId.js";
 import Joi from "joi";
@@ -14,10 +14,24 @@ const contactSchema = Joi.object({
     contactType: Joi.string().valid("personal", "work"),
 });
 
-router.get("/", contactsCtrl.getAll);
-router.get("/:contactId", isValidId, contactsCtrl.getById);
-router.post("/", validateBody(contactSchema), contactsCtrl.create);
-router.put("/:contactId", isValidId, validateBody(contactSchema), contactsCtrl.update);
-router.delete("/:contactId", isValidId, contactsCtrl.remove);
+// GET all contacts
+router.get("/", contactsController.getAllContacts);
+
+// GET one contact
+router.get("/:contactId", isValidId, contactsController.getContactById);
+
+// POST new contact
+router.post("/", validateBody(contactSchema), contactsController.addContact);
+
+// PATCH update contact
+router.patch(
+    "/:contactId",
+    isValidId,
+    validateBody(contactSchema),
+    contactsController.updateContact
+);
+
+// DELETE contact
+router.delete("/:contactId", isValidId, contactsController.deleteContact);
 
 export default router;
