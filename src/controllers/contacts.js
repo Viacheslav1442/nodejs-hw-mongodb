@@ -1,78 +1,89 @@
+import createError from "http-errors";
 import { Contact } from "../models/contact.js";
-import { Router } from "express";
-import { validateBody } from "../middlewares/validateBody.js";
-import { isValidId } from "../middlewares/isValidId.js";
-import Joi from "joi";
 
-const router = Router();
-
-const contactSchema = Joi.object({
-    name: Joi.string().required(),
-    phoneNumber: Joi.string().required(),
-    email: Joi.string().email().required(),
-    isFavourite: Joi.boolean(),
-    contactType: Joi.string().valid("personal", "work"),
-});
-
-// Приклад CRUD маршруту
-
-// Отримати всі контакти
-router.get("/", async (req, res, next) => {
-    try {
-        const contacts = await Contact.find();
-        res.json(contacts);
-    } catch (error) {
-        next(error);
-    }
-});
-
-// Додати новий контакт
-router.post("/", validateBody(contactSchema), async (req, res, next) => {
-    try {
-        const newContact = await Contact.create(req.body);
-        res.status(201).json(newContact);
-    } catch (error) {
-        next(error);
-    }
-});
-
-// Отримати контакт за id
-router.get("/:id", isValidId, async (req, res, next) => {
-    try {
-        const contact = await Contact.findById(req.params.id);
-        if (!contact) {
-            return res.status(404).json({ message: "Contact not found" });
+// ctrlWrapper обгортає асинхронні контролери
+const ctrlWrapper = (ctrl) => {
+    return async (req, res, next) => {
+        try {
+            await ctrl(req, res, next);
+        } catch (error) {
+            next(error);
         }
-        res.json(contact);
-    } catch (error) {
-        next(error);
-    }
-});
+    };
+};
 
-// Оновити контакт
-router.put("/:id", isValidId, validateBody(contactSchema), async (req, res, next) => {
-    try {
-        const updatedContact = await Contact.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedContact) {
-            return res.status(404).json({ message: "Contact not found" });
-        }
-        res.json(updatedContact);
-    } catch (error) {
-        next(error);
-    }
-});
+// GET all contacts
+const getAllContacts = async (req, res) => {
+    const contacts = await Contact.find();
+    res.json({
+        status: 200,
+        message: "Successfully found contacts",
+        data: contacts,
+    });
+};
 
-// Видалити контакт
-router.delete("/:id", isValidId, async (req, res, next) => {
-    try {
-        const deletedContact = await Contact.findByIdAndDelete(req.params.id);
-        if (!deletedContact) {
-            return res.status(404).json({ message: "Contact not found" });
-        }
-        res.json({ message: "Contact deleted" });
-    } catch (error) {
-        next(error);
-    }
-});
+// GET one contact
+const getContactById = async (req, res) => {
+    const { id } = req.params;
+    const contact = await Contact.findById(id);
 
-export default router;
+    if (!contact) {
+        throw createError(404, "Contact not found");
+    }
+
+    res.json({
+        status: 200,
+        message: "Successfully found contact",
+        data: contact,
+    });
+};
+
+// POST new contact
+const addContact = async (req, res) => {
+    const newContact = await Contact.create(req.body);
+
+    res.status(201).json({
+        status: 201,
+        message: "Successfully created contact",
+        data: newContact,
+    });
+};
+
+// PATCH update contact
+const updateContact = async (req, res) => {
+    const { id } = req.params;
+
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+
+    if (!updatedContact) {
+        throw createError(404, "Contact not found");
+    }
+
+    res.json({
+        status: 200,
+        message: "Successfully updated contact",
+        data: updatedContact,
+    });
+};
+
+// DELETE contact
+const deleteContact = async (req, res) => {
+    const { id } = req.params;
+
+    const deletedContact = await Contact.findByIdAndDelete(id);
+
+    if (!deletedContact) {
+        throw createError(404, "Contact not found");
+    }
+
+    res.status(204).send();
+};
+
+// Default export об’єкта з обгорнутими функціями
+export default {
+    getAllContacts: ctrlWrapper(getAllContacts),
+    getContactById: ctrlWrapper(getContactById),
+    addContact: ctrlWrapper(addContact),
+    updateContact: ctrlWrapper(updateContact),
+    deleteContact: ctrlWrapper(deleteContact),
+};
