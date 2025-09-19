@@ -4,14 +4,9 @@ const contactSchema = new Schema(
     {
         name: { type: String, required: true },
         phoneNumber: { type: String, required: true },
-        email: { type: String },
+        email: { type: String, required: true, unique: true },
         isFavourite: { type: Boolean, default: false },
-        contactType: {
-            type: String,
-            enum: ["work", "home", "personal"],
-            required: true,
-            default: "personal",
-        },
+        contactType: { type: String, enum: ["personal", "work"], default: "personal" },
     },
     { timestamps: true }
 );
