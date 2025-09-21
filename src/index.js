@@ -2,20 +2,20 @@ import express from "express";
 import "dotenv/config";
 import { initMongoConnection } from "./db/initMongoConnection.js";
 import contactsRouter from "./routers/contacts.js";
+import createError from "http-errors";
 
 const app = express();
 
 app.use(express.json());
 
-// маршрути
 app.use("/api/contacts", contactsRouter);
 
-// якщо маршрут не знайдено
-app.use((req, res) => {
-    res.status(404).json({ message: "Not found" });
+
+app.use((req, res, next) => {
+    next(createError(404, "Route not found"));
 });
 
-// глобальний обробник помилок
+// Глобальний обробник помилок
 app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ message: err.message });
 });
