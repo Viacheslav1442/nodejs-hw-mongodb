@@ -1,26 +1,25 @@
 import express from "express";
 import cors from "cors";
 import pino from "pino-http";
-
-import { getContactsController, getContactByIdController } from "./controllers/contacts.js";
+import contactsRouter from "./routers/contacts.js";
 
 export const setupServer = () => {
     const app = express();
 
     app.use(cors());
     app.use(pino());
+    app.use(express.json());
 
-    // Роути
-    app.get("/contacts", getContactsController);
-    app.get("/contacts/:contactId", getContactByIdController);
 
-    // Обробка неіснуючих маршрутів
+    app.use("/contacts", contactsRouter);
+
+    // 404 handler для всіх неіснуючих маршрутів
     app.use((req, res) => {
         res.status(404).json({ message: "Not found" });
     });
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        console.log(`Server running on port ${PORT}`);
     });
 };
