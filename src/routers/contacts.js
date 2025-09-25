@@ -1,17 +1,9 @@
 import { Router } from "express";
 import contactsController from "../controllers/contacts.js";
 import { validateBody } from "../middlewares/validateBody.js";
-import Joi from "joi";
+import { createContactSchema, updateContactSchema } from "../validation/contactValidation.js";
 
 const router = Router();
-
-const contactSchema = Joi.object({
-    name: Joi.string().required(),
-    phoneNumber: Joi.string().required(),
-    email: Joi.string().email().required(),
-    isFavourite: Joi.boolean(),
-    contactType: Joi.string().valid("personal", "work"),
-});
 
 // GET all contacts
 router.get("/", contactsController.getAllContacts);
@@ -20,10 +12,10 @@ router.get("/", contactsController.getAllContacts);
 router.get("/:id", contactsController.getContactById);
 
 // POST new contact
-router.post("/", validateBody(contactSchema), contactsController.addContact);
+router.post("/", validateBody(createContactSchema), contactsController.addContact);
 
 // PATCH update contact
-router.patch("/:id", validateBody(contactSchema), contactsController.updateContact);
+router.patch("/:id", validateBody(updateContactSchema), contactsController.updateContact);
 
 // DELETE contact
 router.delete("/:id", contactsController.deleteContact);

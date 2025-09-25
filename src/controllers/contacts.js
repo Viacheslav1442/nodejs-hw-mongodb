@@ -1,7 +1,7 @@
 import createError from "http-errors";
 import { Contact } from "../models/contact.js";
 
-// ctrlWrapper обгортає асинхронні контролери
+// обгортка для асинхронних функцій
 const ctrlWrapper = (ctrl) => {
     return async (req, res, next) => {
         try {
@@ -13,14 +13,38 @@ const ctrlWrapper = (ctrl) => {
 };
 
 // GET all contacts
+// GET all contacts (з пагінацією + сортуванням)
 const getAllContacts = async (req, res) => {
-    const contacts = await Contact.find();
+    const {
+        page = 1,
+        perPage = 10,
+        sortBy = "name",
+        sortOrder = "asc",
+    } = req.query;
+
+    const skip = (page - 1) * perPage;
+    const totalItems = await Contact.countDocuments();
+
+    const contacts = await Contact.find()
+        .sort({ [sortBy]: sortOrder === "desc" ? -1 : 1 })
+        .skip(skip)
+        .limit(Number(perPage));
+
     res.json({
         status: 200,
-        message: "Successfully found contacts",
-        data: contacts,
+        message: "Successfully found contacts!",
+        data: {
+            data: contacts,
+            page: Number(page),
+            perPage: Number(perPage),
+            totalItems,
+            totalPages: Math.ceil(totalItems / perPage),
+            hasPreviousPage: page > 1,
+            hasNextPage: page * perPage < totalItems,
+        },
     });
 };
+
 
 // GET one contact
 const getContactById = async (req, res) => {
@@ -53,7 +77,9 @@ const addContact = async (req, res) => {
 const updateContact = async (req, res) => {
     const { id } = req.params;
 
-    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
+        new: true,
+    });
 
     if (!updatedContact) {
         throw createError(404, "Contact not found");
@@ -79,11 +105,13 @@ const deleteContact = async (req, res) => {
     res.status(204).send();
 };
 
-// Default export об’єкта з обгорнутими функціями
-export default {
+// експорт обгорнутих контролерів
+const contactsController = {
     getAllContacts: ctrlWrapper(getAllContacts),
     getContactById: ctrlWrapper(getContactById),
     addContact: ctrlWrapper(addContact),
     updateContact: ctrlWrapper(updateContact),
     deleteContact: ctrlWrapper(deleteContact),
 };
+
+export default contactsController;
