@@ -3,7 +3,7 @@ import cors from "cors";
 import pino from "pino-http";
 import contactsRouter from "./routers/contacts.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import authRouter from "./src/routers/auth.js";
+import authRouter from "./routers/auth.js";
 
 
 export const setupServer = () => {
