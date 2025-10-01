@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import pino from "pino-http";
 import contactsRouter from "./routers/contacts.js";
-import { errorHandler } from "./middlewares/errorHandler.js"; // підключаємо
+import { errorHandler } from "./middlewares/errorHandler.js";
+import authRouter from "./src/routers/auth.js";
+
 
 export const setupServer = () => {
     const app = express();
@@ -10,6 +12,7 @@ export const setupServer = () => {
     app.use(cors());
     app.use(pino());
     app.use(express.json());
+    app.use("/auth", authRouter);
 
     // Підключення роутера
     app.use("/contacts", contactsRouter);
