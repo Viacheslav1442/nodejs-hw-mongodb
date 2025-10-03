@@ -2,84 +2,78 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
 import { User } from "../models/user.js";
-import { Session } from "../models/session.js";
 
 const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
 const REFRESH_SECRET = process.env.JWT_SECRET_REFRESH;
 
-export const register = async ({ name, email, password }) => {
-    const existing = await User.findOne({ email });
-    if (existing) throw createHttpError(409, "Email in use");
+export const register = async ({ email, password }) => {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw createHttpError(409, "Email in use");
+    }
 
-    const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hash });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const { password: _, ...safeUser } = user.toObject();
-    return safeUser;
-};
-
-export const login = async ({ email, password }, res) => {
-    const user = await User.findOne({ email });
-    if (!user) throw createHttpError(401, "Invalid email or password");
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw createHttpError(401, "Invalid email or password");
-
-    await Session.deleteMany({ userId: user._id });
-
-    const accessToken = jwt.sign({ id: user._id }, ACCESS_SECRET, { expiresIn: "15m" });
-    const refreshToken = jwt.sign({ id: user._id }, REFRESH_SECRET, { expiresIn: "30d" });
-
-    const accessTokenValidUntil = new Date(Date.now() + 15 * 60 * 1000);
-    const refreshTokenValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-    await Session.create({
-        userId: user._id,
-        accessToken,
-        refreshToken,
-        accessTokenValidUntil,
-        refreshTokenValidUntil,
+    const newUser = await User.create({
+        email,
+        password: hashedPassword,
     });
 
-    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: true });
-
-    return { accessToken };
+    return {
+        id: newUser._id,
+        email: newUser.email,
+    };
 };
 
-export const refresh = async (cookies, res) => {
-    const { refreshToken } = cookies;
-    if (!refreshToken) throw createHttpError(401, "No refresh token");
+export const login = async ({ email, password }) => {
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw createHttpError(401, "Email or password is wrong");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+        throw createHttpError(401, "Email or password is wrong");
+    }
+
+    const payload = { id: user._id };
+
+    const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
+    const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
+
+    return {
+        accessToken,
+        refreshToken,
+        user: { email: user.email },
+    };
+};
+
+// Новий метод refresh
+export const refresh = async (cookies) => {
+    const refreshToken = cookies?.refreshToken;
+    if (!refreshToken) {
+        throw createHttpError(401, "No refresh token provided");
+    }
 
     let payload;
     try {
         payload = jwt.verify(refreshToken, REFRESH_SECRET);
-    } catch {
+    } catch (err) {
         throw createHttpError(401, "Invalid refresh token");
     }
 
-    await Session.deleteMany({ userId: payload.id });
+    const user = await User.findById(payload.id);
+    if (!user) {
+        throw createHttpError(401, "User not found");
+    }
 
-    const accessToken = jwt.sign({ id: payload.id }, ACCESS_SECRET, { expiresIn: "15m" });
-    const newRefreshToken = jwt.sign({ id: payload.id }, REFRESH_SECRET, { expiresIn: "30d" });
+    const newAccessToken = jwt.sign({ id: user._id }, ACCESS_SECRET, { expiresIn: "15m" });
 
-    const accessTokenValidUntil = new Date(Date.now() + 15 * 60 * 1000);
-    const refreshTokenValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-    await Session.create({
-        userId: payload.id,
-        accessToken,
-        refreshToken: newRefreshToken,
-        accessTokenValidUntil,
-        refreshTokenValidUntil,
-    });
-
-    res.cookie("refreshToken", newRefreshToken, { httpOnly: true, secure: true });
-
-    return { accessToken };
+    return { accessToken: newAccessToken };
 };
 
-export const logout = async (cookies) => {
-    const { refreshToken } = cookies;
-    if (!refreshToken) return;
-    await Session.deleteOne({ refreshToken });
+
+export const logout = async () => {
+
+    return true;
 };

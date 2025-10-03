@@ -1,32 +1,39 @@
-import express from "express";
-import cors from "cors";
-import pino from "pino-http";
-import contactsRouter from "./routers/contacts.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
-import authRouter from "./routers/auth.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import createHttpError from "http-errors";
+import { User } from "../models/user.js";
+
+const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
+const REFRESH_SECRET = process.env.JWT_SECRET_REFRESH;
+
+export const register = async ({ email, password }) => {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw createHttpError(409, "Email in use");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ email, password: hashedPassword });
+
+    return { id: newUser._id, email: newUser.email };
+};
+
+export const login = async ({ email, password }) => {
+    const user = await User.findOne({ email });
+    if (!user) throw createHttpError(401, "Email or password is wrong");
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) throw createHttpError(401, "Email or password is wrong");
+
+    const payload = { id: user._id };
+    const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
+    const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
+
+    return { accessToken, refreshToken, user: { email: user.email } };
+};
 
 
-export const setupServer = () => {
-    const app = express();
+export const logout = async () => {
 
-    app.use(cors());
-    app.use(pino());
-    app.use(express.json());
-    app.use("/auth", authRouter);
-
-    // Підключення роутера
-    app.use("/contacts", contactsRouter);
-
-    // 404 для неіснуючих маршрутів
-    app.use((req, res, next) => {
-        res.status(404).json({ message: "Not found" });
-    });
-
-    // Глобальний обробник помилок
-    app.use(errorHandler);
-
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
+    return true;
 };
