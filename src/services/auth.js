@@ -19,36 +19,24 @@ export const register = async ({ email, password }) => {
         password: hashedPassword,
     });
 
-    return {
-        id: newUser._id,
-        email: newUser.email,
-    };
+    return { id: newUser._id, email: newUser.email };
 };
 
 export const login = async ({ email, password }) => {
     const user = await User.findOne({ email });
-    if (!user) {
-        throw createHttpError(401, "Email or password is wrong");
-    }
+    if (!user) throw createHttpError(401, "Email or password is wrong");
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        throw createHttpError(401, "Email or password is wrong");
-    }
+    if (!isPasswordValid) throw createHttpError(401, "Email or password is wrong");
 
     const payload = { id: user._id };
 
     const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
     const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
 
-    return {
-        accessToken,
-        refreshToken,
-        user: { email: user.email },
-    };
+    return { accessToken, refreshToken, user: { email: user.email } };
 };
 
-// Новий метод refresh
 export const refresh = async (cookies) => {
     const refreshToken = cookies?.refreshToken;
     if (!refreshToken) {
@@ -72,8 +60,6 @@ export const refresh = async (cookies) => {
     return { accessToken: newAccessToken };
 };
 
-
 export const logout = async () => {
-
     return true;
 };
