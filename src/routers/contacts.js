@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllContacts, getContactById, createContact, updateContact, deleteContact } from "../controllers/contacts.js";
+import contactsController from "../controllers/contacts.js"; // default import
 import { validateBody } from "../middlewares/validateBody.js";
 import Joi from "joi";
 import { authenticate } from "../middlewares/authenticate.js";
@@ -20,12 +20,13 @@ const updateContactSchema = Joi.object({
     favorite: Joi.boolean(),
 }).min(1);
 
-router.use(authenticate); // захищаємо всі маршрути
+// Захищаємо всі маршрути авторизацією
+router.use(authenticate);
 
-router.get("/", getAllContacts);
-router.get("/:id", getContactById);
-router.post("/", validateBody(addContactSchema), createContact);
-router.patch("/:id", validateBody(updateContactSchema), updateContact);
-router.delete("/:id", deleteContact);
+router.get("/", contactsController.getAllContacts);
+router.get("/:id", contactsController.getContactById);
+router.post("/", validateBody(addContactSchema), contactsController.createContact);
+router.patch("/:id", validateBody(updateContactSchema), contactsController.updateContact);
+router.delete("/:id", contactsController.deleteContact);
 
 export default router;
