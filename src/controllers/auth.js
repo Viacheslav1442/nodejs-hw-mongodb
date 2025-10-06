@@ -7,6 +7,7 @@ import { Session } from "../models/session.js";
 const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
 const REFRESH_SECRET = process.env.JWT_SECRET_REFRESH;
 
+// РЕЄСТРАЦІЯ
 export const register = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -25,6 +26,7 @@ export const register = async (req, res, next) => {
     }
 };
 
+// ЛОГІН
 export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -41,7 +43,7 @@ export const login = async (req, res, next) => {
 
         const session = await Session.create({ userId: user._id, refreshToken });
 
-        // кладемо токени в cookies
+        // Кладемо токени в cookies
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: true,
@@ -64,6 +66,31 @@ export const login = async (req, res, next) => {
     }
 };
 
+// REFRESH
+export const refresh = async (req, res, next) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (!refreshToken) throw createHttpError(401, "No refresh token provided");
+
+        let payload;
+        try {
+            payload = jwt.verify(refreshToken, REFRESH_SECRET);
+        } catch {
+            throw createHttpError(401, "Invalid refresh token");
+        }
+
+        const user = await User.findById(payload.id);
+        if (!user) throw createHttpError(401, "User not found");
+
+        const newAccessToken = jwt.sign({ id: user._id }, ACCESS_SECRET, { expiresIn: "15m" });
+
+        res.json({ accessToken: newAccessToken });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ЛОГАУТ
 export const logout = async (req, res, next) => {
     try {
         const sessionId = req.cookies.sessionId;
