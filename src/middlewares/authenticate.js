@@ -1,29 +1,32 @@
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
 import { User } from "../models/user.js";
+import { Session } from "../models/session.js";
 
 const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
 
 export const authenticate = async (req, res, next) => {
     try {
-        const header = req.headers.authorization;
-        if (!header) throw createHttpError(401, "No token provided");
+        const authHeader = req.headers.authorization;
+        if (!authHeader) throw createHttpError(401, "Not authorized");
 
-        const [type, token] = header.split(" ");
-        if (type !== "Bearer" || !token) throw createHttpError(401, "Invalid token format");
+        const [bearer, token] = authHeader.split(" ");
+        if (bearer !== "Bearer") throw createHttpError(401, "Not authorized");
 
-        const payload = jwt.verify(token, ACCESS_SECRET);
+        const decoded = jwt.verify(token, ACCESS_SECRET);
 
-        const user = await User.findById(payload.id);
-        if (!user) throw createHttpError(401, "User not found");
+        const sessionId = req.cookies.sessionId;
+        if (!sessionId) throw createHttpError(401, "Not authorized");
+
+        const session = await Session.findById(sessionId);
+        if (!session) throw createHttpError(401, "Session expired");
+
+        const user = await User.findById(decoded.id);
+        if (!user) throw createHttpError(401, "Not authorized");
 
         req.user = user;
         next();
     } catch (err) {
-        if (err.name === "TokenExpiredError") {
-            next(createHttpError(401, "Access token expired"));
-        } else {
-            next(err);
-        }
+        next(createHttpError(401, "Not authorized"));
     }
 };

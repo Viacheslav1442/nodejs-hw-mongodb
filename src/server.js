@@ -1,39 +1,33 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import createHttpError from "http-errors";
-import { User } from "../models/user.js";
+import "dotenv/config";
+import { initMongoConnection } from "./db/initMongoConnection.js";
+import express from "express";
+import cors from "cors";
+import pino from "pino-http";
+import cookieParser from "cookie-parser";
+import contactsRouter from "./routers/contacts.js";
+import authRouter from "./routers/auth.js";
+import { authenticate } from "./middlewares/authenticate.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
-const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
-const REFRESH_SECRET = process.env.JWT_SECRET_REFRESH;
+const startServer = async () => {
+    await initMongoConnection();
 
-export const register = async ({ email, password }) => {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        throw createHttpError(409, "Email in use");
-    }
+    const app = express();
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ email, password: hashedPassword });
+    app.use(cors());
+    app.use(pino());
+    app.use(express.json());
+    app.use(cookieParser());
 
-    return { id: newUser._id, email: newUser.email };
+    app.use("/auth", authRouter);
+    app.use("/contacts", authenticate, contactsRouter);
+
+    app.use((req, res) => res.status(404).json({ message: "Not found" }));
+
+    app.use(errorHandler);
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 };
 
-export const login = async ({ email, password }) => {
-    const user = await User.findOne({ email });
-    if (!user) throw createHttpError(401, "Email or password is wrong");
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) throw createHttpError(401, "Email or password is wrong");
-
-    const payload = { id: user._id };
-    const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
-    const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
-
-    return { accessToken, refreshToken, user: { email: user.email } };
-};
-
-
-export const logout = async () => {
-
-    return true;
-};
+startServer();
