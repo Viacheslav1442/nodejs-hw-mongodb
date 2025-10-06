@@ -1,7 +1,8 @@
 import express from "express";
-import contactsController from "../controllers/contacts.js";
+import { getAllContacts, getContactById, createContact, updateContact, deleteContact } from "../controllers/contacts.js";
 import { validateBody } from "../middlewares/validateBody.js";
 import Joi from "joi";
+import { authenticate } from "../middlewares/authenticate.js";
 
 const router = express.Router();
 
@@ -19,13 +20,7 @@ const updateContactSchema = Joi.object({
     favorite: Joi.boolean(),
 }).min(1);
 
-const {
-    getAllContacts,
-    getContactById,
-    createContact,
-    updateContact,
-    deleteContact,
-} = contactsController;
+router.use(authenticate); // захищаємо всі маршрути
 
 router.get("/", getAllContacts);
 router.get("/:id", getContactById);

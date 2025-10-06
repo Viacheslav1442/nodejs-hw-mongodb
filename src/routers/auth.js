@@ -1,28 +1,23 @@
 import express from "express";
 import Joi from "joi";
-import { getAllContacts, getContactById, createContact, updateContact, deleteContact } from "../controllers/contacts.js";
+import { register, login, refresh, logout } from "../controllers/auth.js";
 import { validateBody } from "../middlewares/validateBody.js";
 
 const router = express.Router();
 
-const addContactSchema = Joi.object({
-    name: Joi.string().min(3).max(30).required(),
+const registerSchema = Joi.object({
     email: Joi.string().email().required(),
-    phone: Joi.string().pattern(/^[0-9]+$/).required(),
-    favorite: Joi.boolean(),
+    password: Joi.string().min(6).required(),
 });
 
-const updateContactSchema = Joi.object({
-    name: Joi.string().min(3).max(30),
-    email: Joi.string().email(),
-    phone: Joi.string().pattern(/^[0-9]+$/),
-    favorite: Joi.boolean(),
-}).min(1);
+const loginSchema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+});
 
-router.get("/", getAllContacts);
-router.get("/:id", getContactById);
-router.post("/", validateBody(addContactSchema), createContact);
-router.patch("/:id", validateBody(updateContactSchema), updateContact);
-router.delete("/:id", deleteContact);
+router.post("/register", validateBody(registerSchema), register);
+router.post("/login", validateBody(loginSchema), login);
+router.post("/refresh", refresh);
+router.post("/logout", logout);
 
 export default router;
