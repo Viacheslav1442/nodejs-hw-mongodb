@@ -7,10 +7,18 @@ import { Session } from "../models/session.js";
 const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
 const REFRESH_SECRET = process.env.JWT_SECRET_REFRESH;
 
-// РЕЄСТРАЦІЯ
+if (!ACCESS_SECRET || !REFRESH_SECRET) {
+    throw new Error("JWT secrets are not defined in .env");
+}
+
+// ------------------ РЕЄСТРАЦІЯ ------------------
 export const register = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            throw createHttpError(400, "Name, email and password are required");
+        }
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -18,18 +26,40 @@ export const register = async (req, res, next) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ email, password: hashedPassword });
 
-        res.status(201).json({ id: newUser._id, email: newUser.email });
+        const newUser = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+        });
+
+        res.status(201).json({
+            status: 201,
+            message: "Successfully registered a user!",
+            data: {
+                id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                createdAt: newUser.createdAt,
+            },
+        });
     } catch (err) {
-        next(err);
+        if (err.code === 11000) {
+            next(createHttpError(409, "Email already exists"));
+        } else {
+            next(err);
+        }
     }
 };
 
-// ЛОГІН
+// ------------------ ЛОГІН ------------------
 export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            throw createHttpError(400, "Email and password are required");
+        }
 
         const user = await User.findOne({ email });
         if (!user) throw createHttpError(401, "Email or password is wrong");
@@ -39,34 +69,44 @@ export const login = async (req, res, next) => {
 
         const payload = { id: user._id };
         const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
-        const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
+        const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: "30d" });
 
-        const session = await Session.create({ userId: user._id, refreshToken });
+        // видаляємо стару сесію
+        await Session.deleteMany({ userId: user._id });
 
-        // Кладемо токени в cookies
+        // створюємо нову
+        const session = await Session.create({
+            userId: user._id,
+            accessToken,
+            refreshToken,
+            accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000),
+            refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
         });
         res.cookie("sessionId", session._id.toString(), {
             httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
         });
 
         res.json({
-            accessToken,
-            user: { email: user.email },
+            status: 200,
+            message: "Successfully logged in an user!",
+            data: { accessToken },
         });
     } catch (err) {
         next(err);
     }
 };
 
-// REFRESH
+// ------------------ REFRESH ------------------
 export const refresh = async (req, res, next) => {
     try {
         const refreshToken = req.cookies.refreshToken;
@@ -82,15 +122,45 @@ export const refresh = async (req, res, next) => {
         const user = await User.findById(payload.id);
         if (!user) throw createHttpError(401, "User not found");
 
-        const newAccessToken = jwt.sign({ id: user._id }, ACCESS_SECRET, { expiresIn: "15m" });
+        // видаляємо попередню сесію
+        await Session.deleteMany({ userId: user._id });
 
-        res.json({ accessToken: newAccessToken });
+        // створюємо нову
+        const newAccessToken = jwt.sign({ id: user._id }, ACCESS_SECRET, { expiresIn: "15m" });
+        const newRefreshToken = jwt.sign({ id: user._id }, REFRESH_SECRET, { expiresIn: "30d" });
+
+        const newSession = await Session.create({
+            userId: user._id,
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000),
+            refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+
+        res.cookie("refreshToken", newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
+        res.cookie("sessionId", newSession._id.toString(), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
+
+        res.json({
+            status: 200,
+            message: "Successfully refreshed a session!",
+            data: { accessToken: newAccessToken },
+        });
     } catch (err) {
         next(err);
     }
 };
 
-// ЛОГАУТ
+// ------------------ LOGOUT ------------------
 export const logout = async (req, res, next) => {
     try {
         const sessionId = req.cookies.sessionId;
