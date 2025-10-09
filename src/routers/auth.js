@@ -2,6 +2,7 @@ import express from "express";
 import Joi from "joi";
 import { register, login, refresh, logout } from "../controllers/auth.js";
 import { validateBody } from "../middlewares/validateBody.js";
+import { registerSchema, loginSchema } from "../validation/authValidation.js";
 
 const router = express.Router();
 
