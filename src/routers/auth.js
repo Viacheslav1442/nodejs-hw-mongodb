@@ -4,6 +4,7 @@ import { validateBody } from "../middlewares/validateBody.js";
 import { registerSchema, loginSchema } from "../validation/authValidation.js";
 import { resetPasswordController } from "../controllers/auth.js";
 import { resetPasswordSchema } from "../validation/resetPwdValidation.js";
+import { sendResetEmailSchema } from "../validation/resetEmailValidation.js";
 
 const router = express.Router();
 
