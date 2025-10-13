@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import createHttpError from "http-errors";
 import { User } from "../models/user.js";
 import { Session } from "../models/session.js";
-import { resetPasswordController } from "../controllers/auth.js";
 import { resetPasswordSchema } from "../validation/resetPwdValidation.js";
 
 const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
