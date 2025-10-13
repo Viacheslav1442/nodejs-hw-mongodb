@@ -1,4 +1,4 @@
-import { HttpError } from "../helpers/HttpError.js";
+import { HttpError } from "../utils/HttpError.js";
 import { Contact } from "../models/contact.js";
 
 // Отримати всі контакти поточного користувача
