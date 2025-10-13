@@ -11,7 +11,7 @@ const contactSchema = new Schema(
             enum: ["personal", "work"],
             default: "personal",
         },
-        photo: { type: String, default: "" }, // 🆕 поле photo
+        photo: { type: String, default: "" },
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     },
     { timestamps: true, versionKey: false }
