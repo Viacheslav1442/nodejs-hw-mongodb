@@ -1,10 +1,10 @@
-import createHttpError from "http-errors";
+import { HttpError } from "../helpers/HttpError.js";
 import { Contact } from "../models/contact.js";
 
-// ✅ Отримати всі контакти поточного користувача
+// Отримати всі контакти поточного користувача
 const getAllContacts = async (req, res, next) => {
     try {
-        const { _id: userId } = req.user; // кожен користувач бачить лише свої контакти
+        const { _id: userId } = req.user;
         const contacts = await Contact.find({ userId });
 
         res.status(200).json({
@@ -17,16 +17,14 @@ const getAllContacts = async (req, res, next) => {
     }
 };
 
-// ✅ Отримати контакт по ID (тільки свій)
+// Отримати контакт по ID
 const getContactById = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { _id: userId } = req.user;
 
         const contact = await Contact.findOne({ _id: id, userId });
-        if (!contact) {
-            throw createHttpError(404, "Contact not found");
-        }
+        if (!contact) throw HttpError(404, "Contact not found");
 
         res.status(200).json({
             status: 200,
@@ -38,7 +36,7 @@ const getContactById = async (req, res, next) => {
     }
 };
 
-// ✅ Створити контакт (додає userId)
+// Створити новий контакт
 const createContact = async (req, res, next) => {
     try {
         const { _id: userId } = req.user;
@@ -54,7 +52,7 @@ const createContact = async (req, res, next) => {
     }
 };
 
-// ✅ Оновити контакт (тільки свій)
+// Оновити контакт (PUT)
 const updateContact = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -66,9 +64,7 @@ const updateContact = async (req, res, next) => {
             { new: true }
         );
 
-        if (!updatedContact) {
-            throw createHttpError(404, "Contact not found");
-        }
+        if (!updatedContact) throw HttpError(404, "Contact not found");
 
         res.status(200).json({
             status: 200,
@@ -80,16 +76,14 @@ const updateContact = async (req, res, next) => {
     }
 };
 
-// ✅ Видалити контакт (тільки свій)
+// Видалити контакт
 const deleteContact = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { _id: userId } = req.user;
 
         const deletedContact = await Contact.findOneAndDelete({ _id: id, userId });
-        if (!deletedContact) {
-            throw createHttpError(404, "Contact not found");
-        }
+        if (!deletedContact) throw HttpError(404, "Contact not found");
 
         res.status(204).send();
     } catch (error) {
