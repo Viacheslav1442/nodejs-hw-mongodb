@@ -31,9 +31,6 @@ export const sendResetEmail = async (to, link) => {
         console.error("❌ Email send error:", error.message);
         throw new Error("Failed to send email");
     }
-    console.log("📧 Trying to send email to:", to);
-    console.log("SMTP HOST:", process.env.SMTP_HOST);
-    console.log("SMTP USER:", process.env.SMTP_USER);
 
 };
 
