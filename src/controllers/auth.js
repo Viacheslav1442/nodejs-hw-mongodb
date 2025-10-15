@@ -4,6 +4,7 @@ import createHttpError from "http-errors";
 import { User } from "../models/user.js";
 import { Session } from "../models/session.js";
 import { resetPasswordSchema } from "../validation/resetPwdValidation.js";
+import { sendResetEmail } from "../services/email.js";
 
 const ACCESS_SECRET = process.env.JWT_SECRET_ACCESS;
 const REFRESH_SECRET = process.env.JWT_SECRET_REFRESH;
@@ -240,4 +241,3 @@ export const resetPasswordController = async (req, res, next) => {
         next(err);
     }
 };
-

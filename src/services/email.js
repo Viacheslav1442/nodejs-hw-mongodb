@@ -2,7 +2,8 @@ import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
@@ -11,11 +12,23 @@ const transporter = nodemailer.createTransport({
 
 export const sendResetEmail = async (to, link) => {
     const mailOptions = {
-        from: process.env.SMTP_FROM,
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to,
         subject: "Reset your password",
-        html: `<p>Click the link to reset your password: <a href="${link}">${link}</a></p>`,
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6">
+                <h2>Password Reset</h2>
+                <p>Click the link below to reset your password:</p>
+                <a href="${link}" target="_blank">${link}</a>
+                <p>This link will expire in 5 minutes.</p>
+            </div>
+        `,
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error("❌ Email send error:", error.message);
+        throw new Error("Failed to send email");
+    }
 };
