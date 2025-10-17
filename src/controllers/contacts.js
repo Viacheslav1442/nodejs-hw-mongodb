@@ -36,11 +36,19 @@ const getContactById = async (req, res, next) => {
     }
 };
 
-// Створити новий контакт
+// Створити новий контакт (з підтримкою фото)
 const createContact = async (req, res, next) => {
     try {
         const { _id: userId } = req.user;
-        const newContact = await Contact.create({ ...req.body, userId });
+
+        // Cloudinary або інше сховище повертає посилання в req.file.path
+        const photoUrl = req.file?.path || null;
+
+        const newContact = await Contact.create({
+            ...req.body,
+            userId,
+            photo: photoUrl, // додаємо фото якщо воно є
+        });
 
         res.status(201).json({
             status: 201,
