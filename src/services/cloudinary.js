@@ -7,9 +7,14 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+/**
+ 
+ * @param {Buffer} buffer 
+ * @returns {Promise<string>} 
+ */
 export const uploadToCloudinary = (buffer) => {
     return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
+        const uploadStream = cloudinary.uploader.upload_stream(
             { resource_type: "image" },
             (error, result) => {
                 if (error) return reject(error);
@@ -17,6 +22,7 @@ export const uploadToCloudinary = (buffer) => {
             }
         );
 
-        streamifier.createReadStream(buffer).pipe(stream);
+
+        streamifier.createReadStream(buffer).pipe(uploadStream);
     });
 };
