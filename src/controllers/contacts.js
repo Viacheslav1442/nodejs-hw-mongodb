@@ -1,6 +1,6 @@
 import { HttpError } from "../utils/HttpError.js";
 import { Contact } from "../models/contact.js";
-import { cloudinaryUpload } from "../services/cloudinary.js";
+import { uploadToCloudinary } from "../services/cloudinary.js";
 
 // Отримати всі контакти поточного користувача
 const getAllContacts = async (req, res, next) => {
@@ -74,7 +74,7 @@ const updateContact = async (req, res, next) => {
         // --- Оновлюємо фото ---
         if (req.file) {
             // Завантажуємо файл на Cloudinary і отримуємо URL
-            const result = await cloudinaryUpload(req.file.path);
+            const result = await uploadToCloudinary(req.file.path);
             contact.photo = result.secure_url;
         } else if (req.body.photo) {
             // Якщо фото надіслано як URL у JSON
