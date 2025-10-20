@@ -37,13 +37,16 @@ const getContactById = async (req, res, next) => {
     }
 };
 
-// Створити новий контакт (з підтримкою фото)
+// Створити новий контакт (POST з фото)
 const createContact = async (req, res, next) => {
     try {
         const { _id: userId } = req.user;
 
-        // Cloudinary або інше сховище повертає посилання в req.file.path
-        const photoUrl = req.file?.path || null;
+        // --- Завантаження фото на Cloudinary ---
+        let photoUrl = null;
+        if (req.file?.buffer) {
+            photoUrl = await uploadToCloudinary(req.file.buffer);
+        }
 
         const newContact = await Contact.create({
             ...req.body,
@@ -61,23 +64,19 @@ const createContact = async (req, res, next) => {
     }
 };
 
-// Оновити контакт (PATCH, з підтримкою фото)
+// Оновити контакт (PATCH з фото)
 const updateContact = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { _id: userId } = req.user;
 
-        // Знаходимо контакт
         const contact = await Contact.findOne({ _id: id, userId });
         if (!contact) throw HttpError(404, "Contact not found");
 
         // --- Оновлюємо фото ---
-        if (req.file) {
-            // Завантажуємо файл на Cloudinary і отримуємо URL
-            const result = await uploadToCloudinary(req.file.path);
-            contact.photo = result.secure_url;
+        if (req.file?.buffer) {
+            contact.photo = await uploadToCloudinary(req.file.buffer);
         } else if (req.body.photo) {
-            // Якщо фото надіслано як URL у JSON
             contact.photo = req.body.photo;
         }
 
@@ -89,7 +88,6 @@ const updateContact = async (req, res, next) => {
             }
         });
 
-        // Зберігаємо зміни
         await contact.save();
 
         res.status(200).json({
