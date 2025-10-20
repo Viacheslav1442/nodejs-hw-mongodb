@@ -1,6 +1,6 @@
 import { HttpError } from "../utils/HttpError.js";
 import { Contact } from "../models/contact.js";
-import { cloudinaryUpload } from "../utils/cloudinary.js"; // переконайся, що ця утиліта у тебе є
+import { cloudinaryUpload } from "../services/cloudinary.js";
 
 // Отримати всі контакти поточного користувача
 const getAllContacts = async (req, res, next) => {
