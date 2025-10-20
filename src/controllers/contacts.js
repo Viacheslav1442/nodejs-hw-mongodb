@@ -1,6 +1,5 @@
 import { HttpError } from "../utils/HttpError.js";
 import { Contact } from "../models/contact.js";
-import { uploadToCloudinary } from "../services/cloudinary.js";
 
 // Отримати всі контакти поточного користувача
 const getAllContacts = async (req, res, next) => {
@@ -42,11 +41,8 @@ const createContact = async (req, res, next) => {
     try {
         const { _id: userId } = req.user;
 
-        // --- Завантаження фото на Cloudinary ---
-        let photoUrl = null;
-        if (req.file?.buffer) {
-            photoUrl = await uploadToCloudinary(req.file.buffer);
-        }
+
+        const photoUrl = req.file?.path || null;
 
         const newContact = await Contact.create({
             ...req.body,
@@ -74,14 +70,14 @@ const updateContact = async (req, res, next) => {
         if (!contact) throw HttpError(404, "Contact not found");
 
         // --- Оновлюємо фото ---
-        if (req.file?.buffer) {
-            contact.photo = await uploadToCloudinary(req.file.buffer);
+        if (req.file?.path) {
+            contact.photo = req.file.path;
         } else if (req.body.photo) {
             contact.photo = req.body.photo;
         }
 
         // --- Оновлюємо інші поля ---
-        const allowedFields = ["name", "email", "phone"]; // додай інші поля, якщо потрібно
+        const allowedFields = ["name", "email", "phone"];
         allowedFields.forEach((field) => {
             if (req.body[field] !== undefined) {
                 contact[field] = req.body[field];
