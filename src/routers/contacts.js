@@ -20,7 +20,6 @@ router.get("/", contactsController.getAllContacts);
 router.get("/:id", contactsController.getContactById);
 
 // Створити контакт
-
 router.post(
     "/",
     upload.single("photo"),
@@ -29,10 +28,19 @@ router.post(
 );
 
 // Оновити контакт (PUT)
-router.put("/:id", validateBody(updateContactSchema), contactsController.updateContact);
+router.put(
+    "/:id",
+    validateBody(updateContactSchema),
+    contactsController.updateContact
+);
 
-// Часткове оновлення (PATCH)
-router.patch("/:id", validateBody(updateContactSchema), contactsController.updateContact);
+// Часткове оновлення (PATCH) з підтримкою фото
+router.patch(
+    "/:id",
+    upload.single("photo"),
+    validateBody(updateContactSchema),
+    contactsController.updateContact
+);
 
 // Видалити контакт
 router.delete("/:id", contactsController.deleteContact);

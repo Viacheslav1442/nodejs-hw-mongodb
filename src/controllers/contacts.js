@@ -1,5 +1,6 @@
 import { HttpError } from "../utils/HttpError.js";
 import { Contact } from "../models/contact.js";
+import { cloudinaryUpload } from "../utils/cloudinary.js"; // переконайся, що ця утиліта у тебе є
 
 // Отримати всі контакти поточного користувача
 const getAllContacts = async (req, res, next) => {
@@ -47,7 +48,7 @@ const createContact = async (req, res, next) => {
         const newContact = await Contact.create({
             ...req.body,
             userId,
-            photo: photoUrl, // додаємо фото якщо воно є
+            photo: photoUrl,
         });
 
         res.status(201).json({
@@ -60,24 +61,41 @@ const createContact = async (req, res, next) => {
     }
 };
 
-// Оновити контакт (PUT)
+// Оновити контакт (PATCH, з підтримкою фото)
 const updateContact = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { _id: userId } = req.user;
 
-        const updatedContact = await Contact.findOneAndUpdate(
-            { _id: id, userId },
-            req.body,
-            { new: true }
-        );
+        // Знаходимо контакт
+        const contact = await Contact.findOne({ _id: id, userId });
+        if (!contact) throw HttpError(404, "Contact not found");
 
-        if (!updatedContact) throw HttpError(404, "Contact not found");
+        // --- Оновлюємо фото ---
+        if (req.file) {
+            // Завантажуємо файл на Cloudinary і отримуємо URL
+            const result = await cloudinaryUpload(req.file.path);
+            contact.photo = result.secure_url;
+        } else if (req.body.photo) {
+            // Якщо фото надіслано як URL у JSON
+            contact.photo = req.body.photo;
+        }
+
+        // --- Оновлюємо інші поля ---
+        const allowedFields = ["name", "email", "phone"]; // додай інші поля, якщо потрібно
+        allowedFields.forEach((field) => {
+            if (req.body[field] !== undefined) {
+                contact[field] = req.body[field];
+            }
+        });
+
+        // Зберігаємо зміни
+        await contact.save();
 
         res.status(200).json({
             status: 200,
             message: "Successfully updated contact!",
-            data: updatedContact,
+            data: contact,
         });
     } catch (error) {
         next(error);
