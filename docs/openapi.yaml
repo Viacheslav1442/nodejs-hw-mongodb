@@ -1,0 +1,31 @@
+openapi: 3.1.0
+info:
+  version: 1.0.0
+  title: Contacts API
+  description: API для роботи з контактами (створення, оновлення, видалення, отримання)
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:3000
+  - url: https://your-app.onrender.com
+
+tags:
+  - name: Contacts
+    description: Операції з контактами
+
+paths:
+  /contacts:
+    $ref: '../swagger/paths/contacts/get.yaml'
+  /contacts/{contactId}:
+    $ref: '../swagger/paths/contacts/patch.yaml'
+    # при бажанні можна додати $ref на delete.yaml та get.yaml
+
+components:
+  schemas:
+    $ref: '../swagger/components/schemas.yaml'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

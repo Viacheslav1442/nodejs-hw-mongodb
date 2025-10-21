@@ -8,11 +8,17 @@ import contactsRouter from "./routers/contacts.js";
 import authRouter from "./routers/auth.js";
 import { authenticate } from "./middlewares/authenticate.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './docs/swagger.json' assert { type: 'json' };
+
+
 
 const startServer = async () => {
     await initMongoConnection();
 
     const app = express();
+
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
     // Дозволяємо фронтенду надсилати запити з cookies
     app.use(
