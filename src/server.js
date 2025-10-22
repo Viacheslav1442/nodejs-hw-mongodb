@@ -8,17 +8,21 @@ import contactsRouter from "./routers/contacts.js";
 import authRouter from "./routers/auth.js";
 import { authenticate } from "./middlewares/authenticate.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './docs/swagger.json' assert { type: 'json' };
-
-
+import swaggerUi from "swagger-ui-express";
+import fs from "fs";
+import path from "path";
 
 const startServer = async () => {
     await initMongoConnection();
 
     const app = express();
 
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    // ✅ Надійне зчитування swagger.json
+    const swaggerPath = path.join(process.cwd(), "docs/swagger.json");
+    const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
+
+    // ✅ Роут для Swagger UI
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
     // Дозволяємо фронтенду надсилати запити з cookies
     app.use(
@@ -37,17 +41,13 @@ const startServer = async () => {
     app.use("/contacts", authenticate, contactsRouter);
 
     // 404 handler
-    app.use((req, res) =>
-        res.status(404).json({ status: 404, message: "Not found" })
-    );
+    app.use((req, res) => res.status(404).json({ status: 404, message: "Not found" }));
 
     // Глобальний обробник помилок
     app.use(errorHandler);
 
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () =>
-        console.log(`🚀 Server running on port ${PORT}`)
-    );
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 };
 
 startServer();
