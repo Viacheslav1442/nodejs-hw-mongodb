@@ -17,14 +17,13 @@ const startServer = async () => {
 
     const app = express();
 
-    // ✅ Надійне зчитування swagger.json
     const swaggerPath = path.join(process.cwd(), "docs/swagger.json");
     const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
 
-    // ✅ Роут для Swagger UI
+
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-    // Дозволяємо фронтенду надсилати запити з cookies
+
     app.use(
         cors({
             origin: process.env.APP_DOMAIN || "http://localhost:3000",
