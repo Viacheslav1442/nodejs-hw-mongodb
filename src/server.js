@@ -45,6 +45,18 @@ const startServer = async () => {
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+
+};
+
+export const setupServer = async () => {
+    await initMongoConnection();
+
+    const app = express();
+
+    // ...весь код сервера без app.listen
+
+    return app;
 };
 
 startServer();
