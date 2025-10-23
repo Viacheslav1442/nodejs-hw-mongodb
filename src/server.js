@@ -54,7 +54,7 @@ export const setupServer = async () => {
 
     const app = express();
 
-    // ...весь код сервера без app.listen
+
 
     return app;
 };
