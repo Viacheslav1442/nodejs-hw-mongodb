@@ -17,20 +17,18 @@ const startServer = async () => {
 
     const app = express();
 
-    const swaggerPath = path.join(process.cwd(), "docs/swagger.json");
+    // Підключення Swagger
+    const swaggerPath = path.join(process.cwd(), "docs", "swagger.json");
     const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
-
-
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-
+    // Middleware
     app.use(
         cors({
             origin: process.env.APP_DOMAIN || "http://localhost:3000",
             credentials: true,
         })
     );
-
     app.use(pino());
     app.use(express.json());
     app.use(cookieParser());

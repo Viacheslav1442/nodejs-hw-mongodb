@@ -20,7 +20,8 @@ paths:
     $ref: '../swagger/paths/contacts/get.yaml'
   /contacts/{contactId}:
     $ref: '../swagger/paths/contacts/patch.yaml'
-    # при бажанні можна додати $ref на delete.yaml та get.yaml
+    
+
 components:
   schemas:
     $ref: '../swagger/components/schemas.yaml#/schemas'
@@ -28,3 +29,5 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+
+security: []  
