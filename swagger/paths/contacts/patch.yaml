@@ -1,34 +1,26 @@
-patch:
-  tags:
-    - Contacts
-  summary: Оновити контакт
-  operationId: updateContact
-  description: Оновлює дані існуючого контакту
-  security:
-    - bearerAuth: []
-  parameters:
-    - name: contactId
-      in: path
-      required: true
-      schema:
-        type: string
-      description: ID контакту
-  requestBody:
+summary: Оновити контакт
+tags:
+  - Contacts
+parameters:
+  - in: path
+    name: contactId
     required: true
+    schema:
+      type: string
+requestBody:
+  required: true
+  content:
+    multipart/form-data:
+      schema:
+        $ref: '../../components/schemas.yaml#/components/schemas/ContactUpdate'
+responses:
+  '200':
+    description: Контакт оновлено
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas.yaml#/schemas/Contact'
-  responses:
-    '200':
-      description: Контакт оновлено успішно
-      content:
-        application/json:
-          schema:
-            $ref: '../../components/schemas.yaml#/schemas/Contact'
-    '404':
-      description: Контакт не знайдено
-      content:
-        application/json:
-          schema:
-            $ref: '../../components/schemas.yaml#/schemas/ContactError'
+          $ref: '../../components/schemas.yaml#/components/schemas/Contact'
+  '400':
+    description: Невірні дані
+  '404':
+    description: Контакт не знайдено

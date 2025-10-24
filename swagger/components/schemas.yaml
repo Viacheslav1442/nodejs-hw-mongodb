@@ -1,26 +1,29 @@
-schemas:
-  Contact:
-    type: object
-    properties:
-      id:
-        type: string
-        description: Унікальний ID контакту
-      name:
-        type: string
-        description: Ім'я контакту
-      email:
-        type: string
-        description: Email контакту
-      phone:
-        type: string
-        description: Телефон контакту
-    required:
-      - name
-      - email
+Contact:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Унікальний ID контакту
+    name:
+      type: string
+      description: Ім'я контакту
+    email:
+      type: string
+      description: Email контакту
+    phone:
+      type: string
+      description: Телефон контакту
+    photo:
+      type: string
+      format: binary
+      description: Фото контакту
+  required:
+    - name
+    - email
 
-  ContactError:
-    type: object
-    properties:
-      message:
-        type: string
-        description: Повідомлення про помилку
+ContactError:
+  type: object
+  properties:
+    message:
+      type: string
+      description: Повідомлення про помилку

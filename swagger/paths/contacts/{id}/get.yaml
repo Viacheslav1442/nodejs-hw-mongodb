@@ -1,19 +1,19 @@
+summary: Отримати контакт за ID
 tags:
   - Contacts
-summary: Отримати контакт за ID
-operationId: getContactById
-description: Повертає контакт за унікальним ідентифікатором
-security:
-  - bearerAuth: []
 parameters:
-  - name: contactId
-    in: path
+  - in: path
+    name: contactId
     required: true
-    description: ID контакту
     schema:
       type: string
+    description: Ідентифікатор контакту
 responses:
   '200':
-    description: Успішна відповідь із даними контакту
+    description: Контакт знайдено
+    content:
+      application/json:
+        schema:
+          $ref: '../../../components/schemas.yaml#/components/schemas/Contact'
   '404':
     description: Контакт не знайдено

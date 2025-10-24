@@ -2,32 +2,374 @@ openapi: 3.1.0
 info:
   version: 1.0.0
   title: Contacts API
-  description: API для роботи з контактами (створення, оновлення, видалення, отримання)
+  description: >
+    API для роботи з контактами (створення, редагування, видалення, пошук).
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-
-servers:
-  - url: http://localhost:3000
-  - url: https://your-app.onrender.com
 
 tags:
   - name: Contacts
     description: Операції з контактами
 
+servers:
+  - url: https://nodejs-hw-mongodb-mv0u.onrender.com
+
 paths:
   /contacts:
-    $ref: '../swagger/paths/contacts/get.yaml'
+    get:
+      summary: Отримати список контактів
+      description: >
+        Повертає список контактів користувача з можливістю пагінації, сортування та фільтрації.
+      tags:
+        - Contacts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Номер сторінки
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            default: 10
+          description: Кількість контактів на сторінку
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [name, email, phoneNumber, createdAt]
+          description: Поле для сортування
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Напрям сортування
+        - in: query
+          name: isFavourite
+          schema:
+            type: boolean
+          description: Фільтр за улюбленими контактами
+      responses:
+        '200':
+          description: Успішне отримання списку контактів
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Contacts retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+        '400':
+          description: Невірний запит
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизований користувач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутрішня помилка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      operationId: getContacts
+
+    post:
+      summary: Створити новий контакт
+      tags:
+        - Contacts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - phoneNumber
+                - contactType
+              properties:
+                name:
+                  type: string
+                  example: 'John Doe'
+                phoneNumber:
+                  type: string
+                  example: '380931112233'
+                email:
+                  type: string
+                  format: email
+                  example: 'john@example.com'
+                isFavourite:
+                  type: boolean
+                  example: false
+                contactType:
+                  type: string
+                  enum: [work, home, personal]
+                  example: 'work'
+                photo:
+                  type: string
+                  format: binary
+                  description: Фото контакту
+      responses:
+        '201':
+          description: Контакт створено успішно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизований користувач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутрішня помилка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      operationId: createContact
+
   /contacts/{contactId}:
-    $ref: '../swagger/paths/contacts/patch.yaml'
-    
+    get:
+      summary: Отримати контакт за ID
+      tags:
+        - Contacts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: contactId
+          required: true
+          schema:
+            type: string
+          description: ID контакту
+      responses:
+        '200':
+          description: Успішне отримання контакту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          description: Невірний формат ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизований користувач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Контакт не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутрішня помилка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      operationId: getContactById
+
+    patch:
+      summary: Оновити контакт за ID
+      tags:
+        - Contacts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: contactId
+          required: true
+          schema:
+            type: string
+          description: ID контакту
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'Updated Name'
+                phoneNumber:
+                  type: string
+                  example: '380971234567'
+                email:
+                  type: string
+                  format: email
+                  example: 'updated@example.com'
+                isFavourite:
+                  type: boolean
+                  example: true
+                contactType:
+                  type: string
+                  enum: [work, home, personal]
+                  example: 'personal'
+                photo:
+                  type: string
+                  format: binary
+                  description: Нове фото контакту
+      responses:
+        '200':
+          description: Контакт оновлено успішно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизований користувач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Контакт не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутрішня помилка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      operationId: updateContactById
+
+    delete:
+      summary: Видалити контакт за ID
+      tags:
+        - Contacts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: contactId
+          required: true
+          schema:
+            type: string
+          description: ID контакту
+      responses:
+        '204':
+          description: Контакт видалено успішно (без контенту)
+        '400':
+          description: Невірний формат ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизований користувач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Контакт не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутрішня помилка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      operationId: deleteContactById
 
 components:
-  schemas:
-    $ref: '../swagger/components/schemas.yaml#/schemas'
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+      bearerFormat: JWT
 
-security: []  
+  schemas:
+    Contact:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Унікальний ID контакту
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        email:
+          type: string
+          format: email
+        isFavourite:
+          type: boolean
+        contactType:
+          type: string
+          enum: [work, home, personal]
+        photo:
+          type: string
+          format: uri
+          description: URL фото (якщо додано)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'error'
+        message:
+          type: string
+          example: 'Bad Request'
+        data:
+          type: ["object", "null"]
+      example:
+        status: 'error'
+        message: 'Bad Request'
+        data: null

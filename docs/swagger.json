@@ -11,10 +11,10 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000"
+      "url": "https://nodejs-hw-mongodb-mv0u.onrender.com"
     },
     {
-      "url": "https://your-app.onrender.com"
+      "url": "http://localhost:3000"
     }
   ],
   "tags": [
@@ -30,8 +30,7 @@
           "Contacts"
         ],
         "summary": "Отримати всі контакти",
-        "operationId": "getContacts",
-        "description": "Повертає список всіх контактів",
+        "description": "Повертає список усіх контактів користувача",
         "security": [
           {
             "bearerAuth": []
@@ -39,20 +38,31 @@
         ],
         "parameters": [
           {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Номер сторінки"
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "Кількість контактів на сторінку"
           },
           {
-            "name": "offset",
+            "name": "favorite",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer"
-            }
+              "type": "boolean"
+            },
+            "description": "Фільтр улюблених контактів"
           }
         ],
         "responses": {
@@ -69,27 +79,55 @@
               }
             }
           },
-          "404": {
-            "description": "Контакти не знайдено",
+          "401": {
+            "description": "Неавторизований доступ"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Створити новий контакт",
+        "description": "Створює новий контакт для користувача",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Контакт створено",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactError"
+                  "$ref": "#/components/schemas/Contact"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Невірні дані"
           }
         }
       }
     },
     "/contacts/{contactId}": {
-      "patch": {
+      "get": {
         "tags": [
           "Contacts"
         ],
-        "summary": "Оновити контакт",
-        "operationId": "updateContact",
-        "description": "Оновлює дані існуючого контакту",
+        "summary": "Отримати контакт за ID",
         "security": [
           {
             "bearerAuth": []
@@ -103,22 +141,12 @@
             "schema": {
               "type": "string"
             },
-            "description": "ID контакту"
+            "description": "Ідентифікатор контакту"
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Contact"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Контакт оновлено успішно",
+            "description": "Контакт знайдено",
             "content": {
               "application/json": {
                 "schema": {
@@ -128,14 +156,86 @@
             }
           },
           "404": {
-            "description": "Контакт не знайдено",
+            "description": "Контакт не знайдено"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Оновити контакт",
+        "description": "Оновлює дані існуючого контакту",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Контакт оновлено",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactError"
+                  "$ref": "#/components/schemas/Contact"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Невірні дані"
+          },
+          "404": {
+            "description": "Контакт не знайдено"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Видалити контакт",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Контакт видалено"
+          },
+          "404": {
+            "description": "Контакт не знайдено"
           }
         }
       }
@@ -146,34 +246,85 @@
       "Contact": {
         "type": "object",
         "properties": {
-          "id": {
+          "_id": {
             "type": "string",
-            "description": "Унікальний ID контакту"
+            "example": "671a4be71e1a32a0b1d40c77"
           },
           "name": {
             "type": "string",
-            "description": "Ім'я контакту"
+            "example": "John Doe"
           },
           "email": {
             "type": "string",
-            "description": "Email контакту"
+            "example": "john@example.com"
           },
           "phone": {
             "type": "string",
-            "description": "Телефон контакту"
+            "example": "+380991234567"
+          },
+          "favorite": {
+            "type": "boolean",
+            "example": false
+          },
+          "photo": {
+            "type": "string",
+            "format": "binary"
           }
         },
         "required": [
           "name",
-          "email"
+          "email",
+          "phone"
         ]
       },
-      "ContactError": {
+      "ContactCreate": {
         "type": "object",
         "properties": {
-          "message": {
+          "name": {
             "type": "string",
-            "description": "Повідомлення про помилку"
+            "example": "Alice"
+          },
+          "email": {
+            "type": "string",
+            "example": "alice@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+380951112233"
+          },
+          "favorite": {
+            "type": "boolean",
+            "example": false
+          },
+          "photo": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone"
+        ]
+      },
+      "ContactUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "photo": {
+            "type": "string",
+            "format": "binary"
           }
         }
       }
@@ -184,5 +335,10 @@
         "scheme": "bearer"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
 }
