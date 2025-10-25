@@ -1,20 +1,16 @@
-import "dotenv/config";
-import { initMongoConnection } from "./db/initMongoConnection.js";
 import express from "express";
 import cors from "cors";
 import pino from "pino-http";
 import cookieParser from "cookie-parser";
+import fs from "fs";
+import path from "path";
+import swaggerUi from "swagger-ui-express";
 import contactsRouter from "./routers/contacts.js";
 import authRouter from "./routers/auth.js";
 import { authenticate } from "./middlewares/authenticate.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import swaggerUi from "swagger-ui-express";
-import fs from "fs";
-import path from "path";
 
-const startServer = async () => {
-    await initMongoConnection();
-
+export const setupServer = () => {
     const app = express();
 
     // Підключення Swagger
@@ -38,25 +34,13 @@ const startServer = async () => {
     app.use("/contacts", authenticate, contactsRouter);
 
     // 404 handler
-    app.use((req, res) => res.status(404).json({ status: 404, message: "Not found" }));
+    app.use((req, res) =>
+        res.status(404).json({ status: "error", message: "Not found", data: null })
+    );
 
     // Глобальний обробник помилок
     app.use(errorHandler);
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
-
 };
-
-export const setupServer = async () => {
-    await initMongoConnection();
-
-    const app = express();
-
-
-
-    return app;
-};
-
-startServer();

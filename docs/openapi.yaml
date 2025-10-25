@@ -91,7 +91,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      operationId: getContacts
 
     post:
       summary: Створити новий контакт
@@ -156,7 +155,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      operationId: createContact
 
   /contacts/{contactId}:
     get:
@@ -203,7 +201,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      operationId: getContactById
 
     patch:
       summary: Оновити контакт за ID
@@ -227,25 +224,19 @@ paths:
               properties:
                 name:
                   type: string
-                  example: 'Updated Name'
                 phoneNumber:
                   type: string
-                  example: '380971234567'
                 email:
                   type: string
                   format: email
-                  example: 'updated@example.com'
                 isFavourite:
                   type: boolean
-                  example: true
                 contactType:
                   type: string
                   enum: [work, home, personal]
-                  example: 'personal'
                 photo:
                   type: string
                   format: binary
-                  description: Нове фото контакту
       responses:
         '200':
           description: Контакт оновлено успішно
@@ -255,12 +246,6 @@ paths:
                 $ref: '#/components/schemas/Contact'
         '400':
           description: Помилка валідації
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Неавторизований користувач
           content:
             application/json:
               schema:
@@ -277,7 +262,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      operationId: updateContactById
 
     delete:
       summary: Видалити контакт за ID
@@ -319,7 +303,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      operationId: deleteContactById
 
 components:
   securitySchemes:
@@ -350,7 +333,7 @@ components:
         photo:
           type: string
           format: uri
-          description: URL фото (якщо додано)
+          description: URL фото
         createdAt:
           type: string
           format: date-time
@@ -363,13 +346,13 @@ components:
       properties:
         status:
           type: string
-          example: 'error'
+          example: error
         message:
           type: string
-          example: 'Bad Request'
+          example: Bad Request
         data:
           type: ["object", "null"]
       example:
-        status: 'error'
-        message: 'Bad Request'
+        status: error
+        message: Bad Request
         data: null
