@@ -1,19 +1,32 @@
-summary: Отримати контакт за ID
-tags:
-  - Contacts
-parameters:
-  - in: path
-    name: contactId
-    required: true
-    schema:
-      type: string
-    description: Ідентифікатор контакту
-responses:
-  '200':
-    description: Контакт знайдено
-    content:
-      application/json:
-        schema:
-          $ref: '../../../components/schemas.yaml#/components/schemas/Contact'
-  '404':
-    description: Контакт не знайдено
+get:
+  summary: Отримати контакт за ID
+  tags:
+    - Contacts
+  security:
+    - bearerAuth: []
+  parameters:
+    - in: path
+      name: contactId
+      required: true
+      schema:
+        type: string
+      description: ID контакту
+  responses:
+    '200':
+      description: Успішне отримання контакту
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Contact'
+    '404':
+      description: Контакт не знайдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '401':
+      description: Неавторизований користувач
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

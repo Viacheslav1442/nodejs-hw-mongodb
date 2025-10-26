@@ -1,26 +1,66 @@
-summary: Оновити контакт
-tags:
-  - Contacts
-parameters:
-  - in: path
-    name: contactId
-    required: true
-    schema:
-      type: string
-requestBody:
-  required: true
-  content:
-    multipart/form-data:
+patch:
+  summary: Оновити контакт за ID
+  tags:
+    - Contacts
+  security:
+    - bearerAuth: []
+  parameters:
+    - in: path
+      name: contactId
+      required: true
       schema:
-        $ref: '../../components/schemas.yaml#/components/schemas/ContactUpdate'
-responses:
-  '200':
-    description: Контакт оновлено
+        type: string
+      description: ID контакту
+  requestBody:
+    required: true
     content:
-      application/json:
+      multipart/form-data:
         schema:
-          $ref: '../../components/schemas.yaml#/components/schemas/Contact'
-  '400':
-    description: Невірні дані
-  '404':
-    description: Контакт не знайдено
+          type: object
+          properties:
+            name:
+              type: string
+              example: 'Updated Name'
+            phoneNumber:
+              type: string
+              example: '380971234567'
+            email:
+              type: string
+              format: email
+              example: 'updated@example.com'
+            isFavourite:
+              type: boolean
+              example: true
+            contactType:
+              type: string
+              enum: [work, home, personal]
+              example: 'personal'
+            photo:
+              type: string
+              format: binary
+              description: Нове фото контакту
+  responses:
+    '200':
+      description: Контакт оновлено успішно
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Contact'
+    '400':
+      description: Помилка валідації
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '404':
+      description: Контакт не знайдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '401':
+      description: Неавторизований користувач
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

@@ -1,39 +1,28 @@
-summary: Видалити контакт
-tags:
-  - Contacts
-parameters:
-  - in: path
-    name: contactId
-    required: true
-    schema:
-      type: string
-    description: ID контакту
-responses:
-  '204':
-    description: Контакт успішно видалено (без тіла відповіді)
-  '400':
-    description: Некоректний запит
-    content:
-      application/json:
-        schema:
-          type: object
-          properties:
-            status:
-              type: integer
-              example: 400
-            message:
-              type: string
-              example: Invalid contact ID
-  '404':
-    description: Контакт не знайдено
-    content:
-      application/json:
-        schema:
-          type: object
-          properties:
-            status:
-              type: integer
-              example: 404
-            message:
-              type: string
-              example: Contact not found
+delete:
+  summary: Видалити контакт за ID
+  tags:
+    - Contacts
+  security:
+    - bearerAuth: []
+  parameters:
+    - in: path
+      name: contactId
+      required: true
+      schema:
+        type: string
+      description: ID контакту
+  responses:
+    '204':
+      description: Контакт успішно видалено (без тіла відповіді)
+    '404':
+      description: Контакт не знайдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '401':
+      description: Неавторизований користувач
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

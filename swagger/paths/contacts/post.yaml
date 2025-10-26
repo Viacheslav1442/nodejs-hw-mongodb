@@ -1,20 +1,57 @@
-summary: Створити новий контакт
-tags:
-  - Contacts
-requestBody:
-  required: true
-  content:
-    multipart/form-data:
-      schema:
-        $ref: '../../components/schemas.yaml#/components/schemas/ContactCreate'
-responses:
-  '201':
-    description: Контакт створено
+post:
+  summary: Створити новий контакт
+  tags:
+    - Contacts
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
     content:
-      application/json:
+      multipart/form-data:
         schema:
-          $ref: '../../components/schemas.yaml#/components/schemas/Contact'
-  '400':
-    description: Невірні дані
-  '401':
-    description: Неавторизований доступ
+          type: object
+          required:
+            - name
+            - phoneNumber
+            - contactType
+          properties:
+            name:
+              type: string
+              example: 'John Doe'
+            phoneNumber:
+              type: string
+              example: '380931112233'
+            email:
+              type: string
+              format: email
+              example: 'john@example.com'
+            isFavourite:
+              type: boolean
+              example: false
+            contactType:
+              type: string
+              enum: [work, home, personal]
+              example: 'work'
+            photo:
+              type: string
+              format: binary
+              description: Фото контакту
+  responses:
+    '201':
+      description: Контакт створено успішно
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Contact'
+    '400':
+      description: Помилка валідації
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '401':
+      description: Неавторизований користувач
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
