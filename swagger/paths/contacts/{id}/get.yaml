@@ -18,6 +18,12 @@ get:
         application/json:
           schema:
             $ref: '#/components/schemas/Contact'
+    '400':
+      description: Некоректний ідентифікатор контакту
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     '404':
       description: Контакт не знайдено
       content:

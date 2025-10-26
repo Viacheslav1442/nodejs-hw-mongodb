@@ -47,7 +47,7 @@ patch:
           schema:
             $ref: '#/components/schemas/Contact'
     '400':
-      description: Помилка валідації
+      description: Помилка валідації або некоректні дані
       content:
         application/json:
           schema:
